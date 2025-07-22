@@ -1,16 +1,24 @@
-window.onload = () => {
-  fetch("https://tic-tac-toe-0mv8.onrender.com/move", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      player: "X",
-      row: 1,
-      col: 2
-    })
-  })
-  .then(res => res.json())
-  .then(data => console.log("✅ Response from backend:", data))
-  .catch(err => console.error("❌ Error:", err));
-};
+console.log("hello.js is connected!");
+
+const board = document.getElementById('board');
+let currentPlayer = 'X';
+let cells = [];
+
+// Create the 3x3 grid
+for (let i = 0; i < 9; i++) {
+  const cell = document.createElement('div');
+  cell.classList.add('cell');
+  cell.dataset.index = i;
+  board.appendChild(cell);
+  cells.push(cell);
+}
+
+// Handle cell clicks
+cells.forEach(cell => {
+  cell.addEventListener('click', () => {
+    if (cell.textContent === '') {
+      cell.textContent = currentPlayer;
+      currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+    }
+  });
+});
