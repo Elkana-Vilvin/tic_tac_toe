@@ -1,70 +1,41 @@
-const board = document.getElementById("board");
-const statusText = document.getElementById("status");
-const resetButton = document.getElementById("reset");
+let currentPlayer = 'X';
+let board = Array(9).fill(null);
+let gameOver = false;
 
-let currentPlayer = "X";
+function makeMove(cell, index) {
+  if (board[index] || gameOver) return;
 
-// Create 3x3 grid
-for (let i = 0; i < 9; i++) {
-  const cell = document.createElement("div");
-  cell.classList.add("cell");
-  cell.dataset.index = i;
-  board.appendChild(cell);
+  board[index] = currentPlayer;
+  cell.textContent = currentPlayer;
+
+  if (checkWinner()) {
+    document.getElementById('winner').textContent = `${currentPlayer} wins!`;
+    gameOver = true;
+  } else if (!board.includes(null)) {
+    document.getElementById('winner').textContent = `It's a draw!`;
+    gameOver = true;
+  } else {
+    currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+  }
 }
 
-// Add click listeners
-board.addEventListener("click", async (e) => {
-  const cell = e.target;
-  if (!cell.classList.contains("cell") || cell.textContent !== "") return;
+function checkWinner() {
+  const winPatterns = [
+    [0,1,2], [3,4,5], [6,7,8], // rows
+    [0,3,6], [1,4,7], [2,5,8], // cols
+    [0,4,8], [2,4,6]           // diagonals
+  ];
 
-  const index = cell.dataset.index;
+  return winPatterns.some(pattern => {
+    const [a,b,c] = pattern;
+    return board[a] && board[a] === board[b] && board[a] === board[c];
+  });
+}
 
-  try {
-    const res = await fetch("https://tic-tac-toe-5-kf1r.onrender.com/move", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ index: parseInt(index), player: currentPlayer })
-    });
-
-    const data = await res.json();
-    if (data.success) {
-      cell.textContent = currentPlayer;
-      if (data.winner) {
-        statusText.textContent = `${currentPlayer} wins!`;
-        board.style.pointerEvents = "none";
-      } else if (data.draw) {
-        statusText.textContent = "It's a draw!";
-      } else {
-        currentPlayer = currentPlayer === "X" ? "O" : "X";
-        statusText.textContent = `${currentPlayer}'s turn`;
-      }
-    } else {
-      alert(data.message);
-    }
-  } catch (error) {
-    console.error("Error:", error);
-    alert("Server error!");
-  }
-});
-
-// Reset game
-resetButton.addEventListener("click", async () => {
-  try {
-    const res = await fetch("https://tic-tac-toe-5-kf1r.onrender.com/reset", {
-      method: "POST"
-    });
-
-    const data = await res.json();
-    if (data.success) {
-      document.querySelectorAll(".cell").forEach(cell => cell.textContent = "");
-      board.style.pointerEvents = "auto";
-      currentPlayer = "X";
-      statusText.textContent = "X's turn";
-    }
-  } catch (error) {
-    console.error("Error:", error);
-    alert("Server error!");
-  }
-});
+function resetGame() {
+  board = Array(9).fill(null);
+  currentPlayer = 'X';
+  gameOver = false;
+  document.querySelectorAll('.cell').forEach(cell => cell.textContent = '');
+  document.getElementById('winner').textContent = '';
+}
