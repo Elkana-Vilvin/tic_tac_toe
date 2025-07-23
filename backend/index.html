@@ -1,71 +1,112 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Tic Tac Toe</title>
-  <style>
-    .board {
-      display: grid;
-      grid-template-columns: repeat(3, 100px);
-      grid-gap: 5px;
-      margin: 20px auto;
-    }
-
-    .cell {
-      width: 100px;
-      height: 100px;
-      font-size: 2em;
-      text-align: center;
-      line-height: 100px;
-      border: 2px solid #333;
-      cursor: pointer;
-    }
-
-    h2 {
-      text-align: center;
-    }
-  </style>
+    <title>Tic Tac Toe</title>
+    <style>
+        body {
+            font-family: Arial;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+            background-color: #f0f4f7;
+        }
+        h1 {
+            color: #333;
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            gap: 5px;
+        }
+        .cell {
+            width: 100px;
+            height: 100px;
+            background: white;
+            font-size: 2em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #444;
+            cursor: pointer;
+        }
+        #message {
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: green;
+        }
+        button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #0077cc;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #005fa3;
+        }
+    </style>
 </head>
 <body>
-  <h2>Tic Tac Toe — You (X) vs AI (O)</h2>
-  <div class="board" id="board"></div>
+    <h1>Tic Tac Toe</h1>
+    <div id="board"></div>
+    <div id="message"></div>
+    <button onclick="resetGame()">Reset</button>
 
-  <script>
-    const boardEl = document.getElementById("board");
-    let board = Array(9).fill("");
+    <script>
+        const boardEl = document.getElementById("board");
+        const messageEl = document.getElementById("message");
 
-    function drawBoard() {
-      boardEl.innerHTML = "";
-      board.forEach((val, i) => {
-        const cell = document.createElement("div");
-        cell.classList.add("cell");
-        cell.textContent = val;
-        cell.addEventListener("click", () => handleMove(i));
-        boardEl.appendChild(cell);
-      });
-    }
-
-    function handleMove(index) {
-      if (board[index] !== "") return;
-      board[index] = "X";
-      drawBoard();
-      fetch("/api/move", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ board })
-      })
-      .then(res => res.json())
-      .then(data => {
-        const aiMove = data.bestMove;
-        if (aiMove >= 0) {
-          board[aiMove] = "O";
-          drawBoard();
+        function createBoard() {
+            boardEl.innerHTML = "";
+            for (let r = 0; r < 3; r++) {
+                for (let c = 0; c < 3; c++) {
+                    const cell = document.createElement("div");
+                    cell.className = "cell";
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    cell.onclick = makeMove;
+                    boardEl.appendChild(cell);
+                }
+            }
         }
-      });
-    }
 
-    drawBoard();
-  </script>
+        async function makeMove() {
+            const row = this.dataset.row;
+            const col = this.dataset.col;
+            const res = await fetch("https://your-render-url/move", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ row: parseInt(row), col: parseInt(col) }),
+            });
+            const data = await res.json();
+            if (data.status === "ok" || data.status === "win") {
+                this.textContent = data.player === "X" ? "O" : "X"; // previous turn
+                if (data.status === "win") {
+                    messageEl.textContent = `🎉 Player ${data.winner} wins!`;
+                    disableBoard();
+                }
+            } else {
+                alert(data.message);
+            }
+        }
+
+        async function resetGame() {
+            await fetch("https://your-render-url/reset", {
+                method: "POST",
+            });
+            createBoard();
+            messageEl.textContent = "";
+        }
+
+        function disableBoard() {
+            const cells = document.querySelectorAll(".cell");
+            cells.forEach(cell => cell.onclick = null);
+        }
+
+        createBoard();
+    </script>
 </body>
 </html>
