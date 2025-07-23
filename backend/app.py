@@ -1,21 +1,18 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, send_file
 
 app = Flask(__name__)
 
+# Serve index.html
 @app.route('/')
-def home():
-    return render_template('index.html')
+def index():
+    return send_file('index.html')
 
-@app.route('/api/move', methods=['POST'])
-def get_best_move():
-    data = request.get_json()
-    board = data.get("board")
+# Serve style.css
+@app.route('/style.css')
+def style():
+    return send_file('style.css')
 
-    # Dummy AI logic: choose first empty spot
-    for i in range(9):
-        if board[i] == "":
-            return jsonify({"bestMove": i})
-    return jsonify({"bestMove": -1})  # no moves available
-
-if __name__ == '__main__':
-    app.run(debug=True)
+# Serve script.js
+@app.route('/script.js')
+def script():
+    return send_file('script.js')
